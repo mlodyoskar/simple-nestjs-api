@@ -15,3 +15,11 @@ model Books {
   title         String
   released_date DateTime
 }
+
+model Users {
+  id        String @id @default(uuid())
+  username  String @unique
+  password  String
+  firstName String
+  lastName  String
+}
