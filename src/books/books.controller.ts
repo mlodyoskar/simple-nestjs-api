@@ -1,6 +1,15 @@
+import { BooksService } from './books.service';
 import { PrismaService } from './../prisma.service';
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { AppService } from 'src/app.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Books } from '@prisma/client';
 import { JwtGuard } from 'src/auth/auth.guard';
 
@@ -14,14 +23,14 @@ type ReturnedBooks = Pick<Books, 'title'>;
 @Controller('books')
 export class BooksController {
   constructor(
-    private readonly appService: AppService,
+    private readonly booksService: BooksService,
     private readonly prisma: PrismaService,
   ) {}
 
   @Get('')
   @UseGuards(JwtGuard)
-  async findAll(): Promise<GetBooksDto[] | null> {
-    return await this.prisma.books.findMany();
+  async findAll() {
+    return this.booksService.findAll();
   }
 
   @Get(':id')
@@ -30,21 +39,35 @@ export class BooksController {
   ): Promise<ReturnedBooks | null> {
     const { id } = params;
 
-    return await this.prisma.books.findUnique({
-      where: { id },
-      select: { title: true },
-    });
+    return await this.booksService.findOne(id);
   }
 
   @Post('')
-  async postHello(
-    @Body() body: { title: string; release_date: Date },
+  async create(
+    @Body() body: { title: string; release_date: Date; author_id: string },
   ): Promise<Books> {
-    console.log(body.title, body.release_date);
-    const newBook = await this.prisma.books.create({
-      data: { title: body.title, released_date: body.release_date },
-    });
+    const { title, release_date, author_id } = body;
 
-    return newBook;
+    return this.booksService.create(title, release_date, author_id);
+  }
+  @Patch(':id')
+  async update(
+    @Param() params: { id: string },
+    @Body()
+    body: {
+      title: string;
+    },
+  ): Promise<Books> {
+    const { id } = params;
+    const { title } = body;
+
+    return this.booksService.update(id, title);
+  }
+
+  @Delete('')
+  async delete(@Body() body: { id: string }): Promise<string> {
+    const { id } = body;
+
+    return this.booksService.delete(id);
   }
 }
