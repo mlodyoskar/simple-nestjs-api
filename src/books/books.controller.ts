@@ -13,10 +13,16 @@ import {
 import { Books } from '@prisma/client';
 import { JwtGuard } from 'src/auth/auth.guard';
 
-class GetBooksDto {
-  id: string;
+class CreateBookDto {
   title: string;
-  released_date: Date;
+  release_date: Date;
+  author_id: string;
+}
+
+class UpdateBookDto {
+  title?: string;
+  release_date?: Date;
+  author_id?: string;
 }
 
 type ReturnedBooks = Pick<Books, 'title'>;
@@ -43,10 +49,8 @@ export class BooksController {
   }
 
   @Post('')
-  async create(
-    @Body() body: { title: string; release_date: Date; author_id: string },
-  ): Promise<Books> {
-    const { title, release_date, author_id } = body;
+  async create(@Body() createBookDto: CreateBookDto) {
+    const { title, release_date, author_id } = createBookDto;
 
     return this.booksService.create(title, release_date, author_id);
   }
@@ -54,18 +58,16 @@ export class BooksController {
   async update(
     @Param() params: { id: string },
     @Body()
-    body: {
-      title: string;
-    },
-  ): Promise<Books> {
+    updateBookDto: UpdateBookDto,
+  ) {
     const { id } = params;
-    const { title } = body;
+    const { title } = updateBookDto;
 
     return this.booksService.update(id, title);
   }
 
   @Delete('')
-  async delete(@Body() body: { id: string }): Promise<string> {
+  async delete(@Body() body: { id: string }) {
     const { id } = body;
 
     return this.booksService.delete(id);

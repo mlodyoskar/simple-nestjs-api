@@ -1,6 +1,6 @@
 import { PrismaService } from './../prisma.service';
 import { Injectable } from '@nestjs/common';
-import { z } from 'zod';
+import { date, string, z, ZodError } from 'zod';
 
 @Injectable()
 export class BooksService {
@@ -17,15 +17,35 @@ export class BooksService {
   }
 
   async create(title: string, realeaseDate: Date, authorId: string) {
-    const createdBook = await this.prisma.books.create({
-      data: {
-        title,
-        released_date: realeaseDate,
-        authorId,
-      },
-    });
+    try {
+      const createValidation = z.object({
+        title: string(),
+        realeaseDate: date(),
+        authorId: string(),
+      });
 
-    return createdBook;
+      createValidation.parse({ title, realeaseDate, authorId });
+
+      const createdBook = await this.prisma.books.create({
+        data: {
+          title,
+          released_date: realeaseDate,
+          authorId,
+        },
+      });
+
+      return createdBook;
+    } catch (err) {
+      if (err instanceof ZodError) {
+        console.log(err);
+        return {
+          statusCode: 500,
+          message: err.flatten(),
+        };
+      } else {
+        throw err;
+      }
+    }
   }
 
   async update(id: string, title?: string) {
